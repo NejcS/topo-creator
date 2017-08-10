@@ -41,3 +41,10 @@ $('#overhang-button').click(function() {
     var overhang = new fabric.PathGroup(paths, { width: 50, height: 50, left: 50, top: 50 });
     canvas.add(overhang);
 });
+
+$('#draw-button').click(function() {
+    canvas.isDrawingMode = !canvas.isDrawingMode;
+
+    canvas.freeDrawingBrush.color = '#AAA';
+    canvas.freeDrawingBrush.width = 1.5;
+});
