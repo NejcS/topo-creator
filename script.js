@@ -2,10 +2,13 @@ var canvas = new fabric.Canvas('canvas');
 
 var defaultStrokeWidth = 1;
 
-canvas.setDimensions({ width: 500, height: 800})
+canvas.setDimensions({ width: 500, height: 800});
 canvas.hoverCursor = 'pointer';
 
+canvas.setBackgroundColor('rgb(250, 250, 250)', canvas.renderAll.bind(canvas));
+
 canvas.on('object:scaling', function(e) {
+    // force object's stroke width to default value
     var o = e.target;
     if (o.getObjects) {
         o.getObjects().forEach(function(path) {
@@ -16,17 +19,89 @@ canvas.on('object:scaling', function(e) {
     }
 });
 
-$('#chimney-button').click(function() {
-    var corner = new fabric.Path('M12.5 68L2 60.58V1l10.7 6.53L23 1v59.58L12.7 68l-.2-60.47');
-    corner.set({ left: 50, top: 50, stroke: '#AAA', fill: 'rgba(0, 0, 0, 0)' });
-    canvas.add(corner);
+var onSymbolClick = function(symbol) {
+    fabric.loadSVGFromURL('./symbols/' + symbol + '.svg', function(objects, options) {   
+        if (objects && objects.length) {
+            if (objects.length > 1) {
+                var group = fabric.util.groupSVGElements(objects, options);
+                canvas.add(group)
+            } else {
+                canvas.add(objects[0]);
+            }
+        } else {
+            console.warn('couldn\'t load symbol: ' + symbol);
+        }
+    });
+}
 
-    // fabric.loadSVGFromURL('./symbols/kot.svg', function(objects, options) {
-    //     canvas.add(objects[0]);
-    // });
-});
 
-$('#overhang-button').click(function() {
+document.getElementById('draw').onclick = function() {
+    canvas.isDrawingMode = !canvas.isDrawingMode;
+
+    canvas.freeDrawingBrush.color = '#AAA';
+    canvas.freeDrawingBrush.width = 1.5;
+    canvas.freeDrawingBrush.strokeDashArray = [5];
+};
+
+
+document.getElementById('save-image').onclick = function() {
+    if (!fabric.Canvas.supports('toDataURL')) {
+        alert('This browser doesn\'t support serialization of canvas to an image');
+    }
+    else {
+        document.getElementById('canvas').toBlob(function(blob) {
+            saveAs(blob, "slika.png");
+        });
+    }
+};
+
+var _clipboard;
+document.onkeydown = function(e) {
+    var eventObj = window.event ? event : e;
+    // copy
+    if (eventObj.keyCode == 67 && (eventObj.ctrlKey || eventObj.metaKey)) {
+        canvas.getActiveObject().clone(function(cloned) {
+            _clipboard = cloned;
+        });
+    }
+    // paste
+    else if (eventObj.keyCode == 86 && (eventObj.ctrlKey || eventObj.metaKey)) {
+        _clipboard.clone(function(clonedObj) {
+            canvas.discardActiveObject();
+
+            clonedObj.set({
+                left: clonedObj.left + 10,
+                top: clonedObj.top + 10,
+                evented: true,
+            });
+            
+            if (clonedObj.type === 'activeSelection') {
+                // active selection needs a reference to the canvas.
+                clonedObj.canvas = canvas;
+                clonedObj.forEachObject(function(obj) {
+                    canvas.add(obj);
+                });
+                // this should solve the unselectability
+                clonedObj.setCoords();
+            } else {
+                canvas.add(clonedObj);
+            }
+            
+            _clipboard.top += 10;
+            _clipboard.left += 10;
+            canvas.setActiveObject(clonedObj);
+        });
+    }
+};
+
+document.getElementById('debug').onclick = function() {
+    canvas.setDimensions({ width: 1000, height: 1000});
+};
+
+/*
+    // unused code / examples
+
+document.getElementById('overhang-button').onclick = function() {
     var paths = [];
 
     [
@@ -40,11 +115,5 @@ $('#overhang-button').click(function() {
 
     var overhang = new fabric.PathGroup(paths, { width: 50, height: 50, left: 50, top: 50 });
     canvas.add(overhang);
-});
-
-$('#draw-button').click(function() {
-    canvas.isDrawingMode = !canvas.isDrawingMode;
-
-    canvas.freeDrawingBrush.color = '#AAA';
-    canvas.freeDrawingBrush.width = 1.5;
-});
+};
+*/
