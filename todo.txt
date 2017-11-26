@@ -1,0 +1,9 @@
+- add more symbols
+- menu of symbols to jpg
+- preload SVGs
+- configurable canvas size
+- save state of canvas
+✓✓✓ copy/paste/delete selected objects
+✓ straight line drawing
+- colored sections tool (for grass, colored rock, snow ...)
+- improve UI
