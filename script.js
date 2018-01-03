@@ -1,5 +1,6 @@
 var topoEditor = {
     isLineDrawingMode: false,
+    drawingMode: false,
 
     settings: {
         strokeWidth: 1,
@@ -10,7 +11,9 @@ var topoEditor = {
 
     init: function() {
         var self = this;
-        this.canvas = new fabric.Canvas('canvas');
+        this.canvas = new fabric.Canvas('canvas', {
+            selectionColor: 'rgba(40, 40, 40, 0.1)'
+        });
         this.canvas.setDimensions({ width: 500, height: 800});
         this.canvas.hoverCursor = 'pointer';
         this.canvas.setBackgroundColor(this.settings.canvasBackgroundColor, this.canvas.renderAll.bind(this.canvas));
@@ -34,6 +37,11 @@ var topoEditor = {
         document.getElementById('draw-dashed').onclick = function() {
 
             self.canvas.isDrawingMode = !self.canvas.isDrawingMode;
+
+            self.drawingMode = self.canvas.isDrawingMode ? 'dashed' : null;
+            self.canvas.off('mouse:down', null);
+            self.canvas.off('mouse:move', null);
+            self.canvas.off('mouse:up', null);
 
             self.canvas.freeDrawingBrush.color = '#AAA';
             self.canvas.freeDrawingBrush.width = 1.5;
@@ -116,9 +124,13 @@ var topoEditor = {
             // if ESC => unselect selected object
         });
 
-        document.getElementById('draw-straight').onclick = function() {
-            self.isLineDrawingMode = !self.isLineDrawingMode;
-            if (self.isLineDrawingMode) {
+        document.getElementById('draw-solid').onclick = function() {
+            if (self.drawingMode !== 'solid') {
+                self.drawingMode = 'solid';
+                self.canvas.isDrawingMode = false;
+                self.canvas.selection = false;
+                // disable canvas selection
+
                 var mouseDown, line
                 self.canvas.on('mouse:down', function(o) {
                     mouseDown = true;
@@ -145,6 +157,8 @@ var topoEditor = {
                     mouseDown = false;
                 });
             } else {
+                self.drawingMode = false;
+                self.canvas.selection = true;
                 self.canvas.off('mouse:down', null);
                 self.canvas.off('mouse:move', null);
                 self.canvas.off('mouse:up', null);
